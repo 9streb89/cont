@@ -1,0 +1,43 @@
+---
+hostNetwork: true
+serviceAccountName: Postgresql
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - image: postgres:10.13
+        name: postgres
+        ports:
+        - containerPort: 5432
+        - protocol: TCP
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 10Gi
+        env:
+          - postgres_password: PASS
+          - postgres_user: testuser
+            valueFrom:
+              secretKeyRef:
+                name: my-secret
+                key: PASS
+#$ docker run -d \
+#--name some-postgres \
+#-e POSTGRES_PASSWORD=mysecretpassword \
+#-e PGDATA=/var/lib/postgresql/data/pgdata \
+#-v /custom/mount:/var/lib/postgresql/data \
+#-postgres
