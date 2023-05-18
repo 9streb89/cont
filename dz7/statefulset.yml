@@ -1,0 +1,46 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: prometheus
+spec:
+  serviceName: prometheus
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+  spec:
+    serviceAccount: prometheus
+    terminationGracePeriodSeconds: 10
+    containers:
+      - name: prometheus-k8s
+        image: prom/prometheus:v2.19.2
+        env:
+          - name: MY_POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+        ports:
+            -name: admin
+            protocol: TCP
+            containerPort: 9090
+      initContainers:
+      - image: prometheus
+        name: prometheus-permissions-fix
+        command: ["sh", "-c", "chmod 777 /prometheus"]
+        volumeMounts:
+        - name: data
+          mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: prometheus
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
+        storageClassName: csi-ceph-hdd-ms1
